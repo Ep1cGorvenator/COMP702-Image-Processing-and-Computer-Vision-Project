@@ -1,0 +1,12 @@
+venv/
+
+# Track raw images — these are pushed to GitHub
+# dataset/raw/ pushed normally, no ignore rule needed
+
+# Ignore ALL generated processed images
+dataset/processed/train/**/*.jpg
+dataset/processed/test/clean/**/*.jpg
+dataset/processed/test/augmented/**/*.jpg
+
+# Keep folder structure via .gitkeep
+!dataset/processed/**/.gitkeep
