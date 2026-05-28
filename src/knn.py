@@ -99,6 +99,8 @@ print("[INFO] features matrix: {:.2f}MB".format(
 #----------------KNN CLASSIFICATION----------------
 print("-------------------KNN CLASSIFICATION-------------------")
 print("[INFO] evaluating raw pixel accuracy...")
+#YOU CAN SPECIFY HOW MANY NEIGHBOURS TO USE WITH THE n_neighbors PARAMETER, 
+# AND HOW MANY CPU CORES TO USE WITH THE n_jobs PARAMETER
 model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
 model.fit(trainRI, trainRL)
 acc = model.score(testRI, testRL)
@@ -107,6 +109,8 @@ print("[INFO] raw pixel accuracy: {:.2f}%".format(acc * 100))
 # train and evaluate a k-NN classifer on the histogram
 # representations
 print("[INFO] evaluating histogram accuracy...")
+#YOU CAN SPECIFY HOW MANY NEIGHBOURS TO USE WITH THE n_neighbors PARAMETER, 
+# AND HOW MANY CPU CORES TO USE WITH THE n_jobs PARAMETER
 model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
 model.fit(trainFeat, trainLabels)
 acc = model.score(testFeat, testLabels)
