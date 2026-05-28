@@ -15,6 +15,8 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
+from pathlib import Path
+
 def image_to_feature_vector(image, size=(32, 32)):
 	# resize the image to a fixed size, then flatten the image into
 	# a list of raw pixel intensities
@@ -38,7 +40,8 @@ def extract_color_histogram(image, bins=(8, 8, 8)):
 
 # grab the list of images that we'll be describing
 print("[INFO] describing images...")
-imagePaths = list(paths.list_images(r"C:\Users\aalam\Downloads\2026\COMP702\NEWPROJECT\COMP702-Image-Processing-and-Computer-Vision-Project\dataset\processed\processed"))
+BASE_DIR = Path(__file__).resolve().parent.parent
+imagePaths = list(paths.list_images(BASE_DIR / "dataset" / "processed"))
 # initialize the raw pixel intensities matrix, the features matrix,
 # and labels list
 rawImages = []
