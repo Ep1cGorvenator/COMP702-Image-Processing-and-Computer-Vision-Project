@@ -10,3 +10,7 @@ dataset/processed/test/augmented/**/*.jpg
 
 # Keep folder structure via .gitkeep
 !dataset/processed/**/.gitkeep
+
+# Ignore preprocessed images
+dataset/preprocessed/**/*.jpg
+!dataset/preprocessed/**/.gitkeep

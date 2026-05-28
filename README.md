@@ -8,7 +8,7 @@ Raw images are included in this repository under `dataset/raw/`.
 
 ### Processed Images
 Processed and augmented images are available for download here:
-[Google Drive Link] ← paste your link here
+(https://drive.google.com/file/d/1aOc8WKLM5G2Z-5KAWnxh2_Qhj7rIIlSe/view?usp=sharing)
 
 Download and place the `processed/` folder inside `dataset/`.
 
@@ -19,3 +19,17 @@ python setup_project.py
 python src/augmentation.py
 ```
 Note: This will take several minutes to complete.
+
+## Preprocessed Images
+
+Preprocessed images are available for download here:
+(https://drive.google.com/file/d/1-K6Kt6W75GToE_r-wme3AZJewVANlugJ/view?usp=sharing)
+
+Download and place the `preprocessed/` folder 
+inside `dataset/`.
+
+### To Regenerate Preprocessed Images Yourself
+```bash
+python src/preprocessing.py
+```
+Note: Requires processed/ images to be present first.

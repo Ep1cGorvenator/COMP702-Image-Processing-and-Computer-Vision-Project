@@ -7,9 +7,15 @@ designs       = ["old", "new"]
 sides         = ["front", "back"]
 
 output_roots = [
+    # ── Processed folders (augmented images) ──
     os.path.join(BASE_DIR, "dataset", "processed", "train"),
     os.path.join(BASE_DIR, "dataset", "processed", "test", "clean"),
     os.path.join(BASE_DIR, "dataset", "processed", "test", "augmented"),
+
+    # ── Preprocessed folders (pipeline output) ──
+    os.path.join(BASE_DIR, "dataset", "preprocessed", "train"),
+    os.path.join(BASE_DIR, "dataset", "preprocessed", "test", "clean"),
+    os.path.join(BASE_DIR, "dataset", "preprocessed", "test", "augmented"),
 ]
 
 for root in output_roots:
