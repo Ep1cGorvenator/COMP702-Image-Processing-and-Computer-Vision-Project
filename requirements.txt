@@ -1,3 +1,5 @@
 opencv-contrib-python
 scikit-learn
 imutils
+numpy
+pathlib
