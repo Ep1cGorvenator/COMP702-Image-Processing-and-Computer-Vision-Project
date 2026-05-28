@@ -1,5 +1,5 @@
 venv/
-
+.venv/
 # Track raw images — these are pushed to GitHub
 # dataset/raw/ pushed normally, no ignore rule needed
 
