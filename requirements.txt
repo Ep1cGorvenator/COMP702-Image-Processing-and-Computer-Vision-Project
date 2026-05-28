@@ -3,3 +3,4 @@ scikit-learn
 imutils
 numpy
 pathlib
+scipy
