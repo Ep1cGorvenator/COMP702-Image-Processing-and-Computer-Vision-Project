@@ -52,7 +52,7 @@ def extract_hu_moments(image):
 # grab the list of images that we'll be describing
 print("[INFO] describing images...")
 BASE_DIR = Path(__file__).resolve().parent.parent
-imagePaths = list(paths.list_images(BASE_DIR / "dataset" / "processed"))
+imagePaths = list(paths.list_images(BASE_DIR / "dataset" / "preprocessed"))
 
 # initialize the raw pixel intensities matrix, the histogram features matrix, and HU Moments features matrix
 rawImages = []
@@ -203,7 +203,6 @@ pipe.score(testHM, testLabelsHM)
 print(classification_report(testLabelsHM, pipe.predict(testHM)))
 
 #SIFT
-
 print("\nevaluating SVM accuracy using sift features:")
 pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
 pipe.fit(sift_x_train, siftTrainLabels)

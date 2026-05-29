@@ -1,8 +1,6 @@
 import numpy as np
 import cv2
 
-from imutils import paths
-
 from sklearn.cluster import KMeans
 
 from scipy.spatial.distance import cdist
@@ -33,7 +31,7 @@ def sift_train(training_image_paths, d_sample_count, vocabulary_size):
 
         segmented_feature_vectors[(path_idx + d_sample_count):(path_idx + 2*d_sample_count),] = descriptor_samples[:]
         #print(segmented_feature_vectors)
-        print(f'training loop 1 progress: {(path_idx / num_images) * 100}%', flush=True)
+        #print(f'training loop 1 progress: {(path_idx / num_images) * 100}%', flush=True)
 
     vocabulary = KMeans(n_clusters=vocabulary_size, random_state=0, n_init='auto').fit(segmented_feature_vectors)
 
@@ -54,7 +52,7 @@ def sift_train(training_image_paths, d_sample_count, vocabulary_size):
 
         final_feature_vectors.append(image_features)
 
-        print(f'training loop 2 progress: {(path_idx / num_images) * 100}%', flush=True)
+        #print(f'training loop 2 progress: {(path_idx / num_images) * 100}%', flush=True)
 
     final_feature_vectors = np.asarray(final_feature_vectors)
 
@@ -86,7 +84,7 @@ def sift_test(testing_image_paths, vocabulary):
 
         final_feature_vectors.append(image_features)
 
-        print(f'testing loop progress: {(path_idx / num_images) * 100}%', flush=True)
+        #print(f'testing loop progress: {(path_idx / num_images) * 100}%', flush=True)
 
     final_feature_vectors = np.asarray(final_feature_vectors)
 
