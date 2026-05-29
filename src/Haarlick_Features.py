@@ -60,35 +60,42 @@ def getHaarlickFeatures(regions):
     for region in regions:
 
         feature = []
+    
+        GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='contrast')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'contrast')))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='dissimilarity')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'dissimilarity')))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='homogeneity')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'homogeneity')))
+     #   print(GLCM[:,:,1,1])
+     #   print(ski.feature.graycoprops(GLCM, prop='energy'))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='energy')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'energy')))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='correlation')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'correlation')))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='ASM')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'ASM')))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='mean')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'mean')))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='variance')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'variance')))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='std')))
 
         GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'std')))
-
-        GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
-        feature.append(np.average(ski.feature.graycoprops(GLCM, 'entropy')))
+        feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='entropy')))
 
         features.append(np.array(feature))
+
+    return features
+
+print(getHaarlickFeatures(regions)[1])
+
