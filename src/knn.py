@@ -23,6 +23,8 @@ from sklearn import tree
 
 from skimage import feature
 
+from mahotas.features import haralick
+
 def image_to_feature_vector(image, size=(32, 32)):
 	# resize the image to a fixed size, then flatten the image into
 	# a list of raw pixel intensities
@@ -60,6 +62,12 @@ def extract_lbp_features(image):
     features = feature.local_binary_pattern(gray, P=8, R=1, method='uniform')
     return features
 
+def extract_haralick_features(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    textures = haralick(gray)
+    return textures.mean(axis=0)
+
+
 # grab the list of images that we'll be describing
 print("[INFO] describing images...")
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -70,6 +78,7 @@ rawImages = []
 features = []
 HUMoments = []
 lbpFeatures = []
+haralickFeatures = []
 labels = []
 
 
@@ -100,6 +109,7 @@ for (i, imagePath) in enumerate(imagePaths):
 	features.append(hist)
 	HUMoments.append(extract_hu_moments(image))
 	lbpFeatures.append(extract_lbp_features(image))
+	haralickFeatures.append(extract_haralick_features(image))
 
 	labels.append(label)
 	# show an update every 1,000 images
@@ -112,7 +122,9 @@ rawImages = np.array(rawImages)
 features = np.array(features)
 HUMoments = np.array(HUMoments)
 lbpFeatures = np.array(lbpFeatures)
+haralickFeatures = np.array(haralickFeatures)
 labels = np.array(labels)
+
 
 print("\nHow much memory is being consumed by creating each feature vector:")
 print("pixels matrix: {:.2f}MB".format(
@@ -123,6 +135,8 @@ print("Hu Moments matrix: {:.2f}MB".format(
 	HUMoments.nbytes / (1024 * 1000.0)))
 print("LBP Features matrix: {:.2f}MB".format(
 	lbpFeatures.nbytes / (1024 * 1000.0)))
+print("Haralick Features matrix: {:.2f}MB".format(
+	haralickFeatures.nbytes / (1024 * 1000.0)))
 
 #---------TRAIN TEST SPLIT----------------
 #Using raw pixel intensities as features for training and testing
@@ -137,9 +151,10 @@ print("LBP Features matrix: {:.2f}MB".format(
 (trainHM, testHM, trainLabelsHM, testLabelsHM) = train_test_split(
 	HUMoments, labels, test_size=0.20, random_state=42)
 
-#LBP setup
-(trainLBP, testLBP, lbpTrainLabels, lbpTestLabels) = train_test_split(
-	lbpFeatures, labels, test_size=0.20, random_state=42)
+
+#Haralick setup
+(trainHaralick, testHaralick, haralickTrainLabels, haralickTestLabels) = train_test_split(
+	haralickFeatures, labels, test_size=0.20, random_state=42)
 
 #SIFT setup
 (trainImagePaths, testImagePaths, siftTrainLabels, siftTestLabels) = train_test_split(
@@ -183,12 +198,12 @@ model.fit(sift_x_train, siftTrainLabels)
 acc = model.score(sift_x_test, siftTestLabels)
 print("SIFT accuracy: {:.2f}%".format(acc * 100))
 
-# #LBP
-# print("\nevaluating LBP accuracy:")
-# model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
-# model.fit(trainLBP, lbpTrainLabels)
-# acc = model.score(testLBP, lbpTestLabels)
-# print("LBP accuracy: {:.2f}%".format(acc * 100))
+#HARLICK
+print("\nevaluating Haralick accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(trainHaralick, haralickTrainLabels)
+acc = model.score(testHaralick, haralickTestLabels)
+print("Haralick accuracy: {:.2f}%".format(acc * 100))
 
 #----------------NAIVE BAYES CLASSIFICATION----------------
 print("\n\n-------------------NAIVE BAYES CLASSIFICATION-------------------")
@@ -224,13 +239,14 @@ y_pred = nb_classifier_for_sift.predict(sift_x_test)
 print("Accuracy:", accuracy_score(siftTestLabels, y_pred))
 print(classification_report(siftTestLabels, y_pred))
 
-# #LBP
-# print("\nevaluating LBP accuracy:")
-# nb_classifier_for_lbp = GaussianNB()
-# nb_classifier_for_lbp.fit(trainLBP, lbpTrainLabels)
-# y_pred = nb_classifier_for_lbp.predict(testLBP)
-# print("Accuracy:", accuracy_score(lbpTestLabels, y_pred))
-# print(classification_report(lbpTestLabels, y_pred))
+#HARALICK
+print("\nevaluating Haralick accuracy:")
+nb_classifier_for_haralick = GaussianNB()
+nb_classifier_for_haralick.fit(trainHaralick, haralickTrainLabels)
+y_pred = nb_classifier_for_haralick.predict(testHaralick)
+print("Accuracy:", accuracy_score(haralickTestLabels, y_pred))
+print(classification_report(haralickTestLabels, y_pred))
+
 
 #----------------SVM CLASSIFICATION----------------
 print("\n\n-------------------SVMCLASSIFICATION-------------------")
@@ -262,12 +278,12 @@ pipe.fit(sift_x_train, siftTrainLabels)
 pipe.score(sift_x_test, siftTestLabels)
 print(classification_report(siftTestLabels, pipe.predict(sift_x_test)))
 
-# #LBP
-# print("\nevaluating SVM accuracy using LBP features:")
-# pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
-# pipe.fit(trainLBP, lbpTrainLabels)
-# pipe.score(testLBP, lbpTestLabels)
-# print(classification_report(lbpTestLabels, pipe.predict(testLBP)))
+#HARALICK
+print("\nevaluating SVM accuracy using Haralick features:")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(trainHaralick, haralickTrainLabels)
+pipe.score(testHaralick, haralickTestLabels)
+print(classification_report(haralickTestLabels, pipe.predict(testHaralick)))
 
 #----------------DECISION TREE CLASSIFICATION----------------
 clf = tree.DecisionTreeClassifier()
@@ -300,10 +316,9 @@ y_pred = clf.predict(sift_x_test)
 print("Accuracy:", accuracy_score(siftTestLabels, y_pred))
 print(classification_report(siftTestLabels, y_pred))
 
-# #LBP
-# print("\nevaluating Decision Tree accuracy using LBP features:")
-# clf.fit(trainLBP, lbpTrainLabels)
-# y_pred = clf.predict(testLBP)
-# print("Accuracy:", accuracy_score(lbpTestLabels, y_pred))
-# print(classification_report(lbpTestLabels, y_pred))
-
+#HARALICK
+print("\nevaluating Decision Tree accuracy using Haralick features:")
+clf.fit(trainHaralick, haralickTrainLabels)
+y_pred = clf.predict(testHaralick)
+print("Accuracy:", accuracy_score(haralickTestLabels, y_pred))
+print(classification_report(haralickTestLabels, y_pred))
