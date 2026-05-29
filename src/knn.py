@@ -19,6 +19,8 @@ from pathlib import Path
 
 import sift_features as sf
 
+import Haarlick_Features as haar
+
 def image_to_feature_vector(image, size=(32, 32)):
 	# resize the image to a fixed size, then flatten the image into
 	# a list of raw pixel intensities
@@ -91,7 +93,7 @@ for (i, imagePath) in enumerate(imagePaths):
 	# show an update every 1,000 images
 	if i > 0 and i % 1000 == 0:
 		print("[INFO] processed {}/{}".format(i, len(imagePaths)))
-		
+	
 # show some information on the memory consumed by the raw images
 # matrix and features matrix
 rawImages = np.array(rawImages)
@@ -125,6 +127,17 @@ print("Hu Moments matrix: {:.2f}MB".format(
 	imagePaths, labels, test_size=0.2, random_state=42)
 sift_x_train, sift_x_test = sf.sift_extract(trainImagePaths, testImagePaths)
 
+#Haarlick features
+(trainImgPaths, testImgPaths , trainLabelsHaar, testLabelsHaar) = train_test_split(
+	imagePaths, labels, test_size=0.2, random_state=42)
+haarlick_train= haar.haarlickTrain(trainImgPaths)
+#print("Training",haarlick_train.shape)
+#print("TrainLabels", trainLabelsHaar)
+haarlick_test = haar.haarlickTest(testImgPaths)
+#print("Testing",haarlick_test.shape)
+#print("TestingLabels",testLabelsHaar)
+print("done")
+
 #----------------KNN CLASSIFICATION----------------
 print("\n-------------------KNN CLASSIFICATION-------------------")
 #YOU CAN SPECIFY HOW MANY NEIGHBOURS TO USE WITH THE n_neighbors PARAMETER, 
@@ -150,6 +163,13 @@ model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
 model.fit(trainHM, trainLabelsHM)
 acc = model.score(testHM, testLabelsHM)
 print("Hu Moments accuracy: {:.2f}%".format(acc * 100))
+
+#HAARLICK FEATURES
+print("\nevaluating Haarlick features accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(haarlick_train, trainLabelsHaar)
+acc = model.score(haarlick_test, testLabelsHaar)
+print("Haarlick accuracy: {:.2f}%".format(acc * 100))
 
 #----------------NAIVE BAYES CLASSIFICATION----------------
 print("\n\n-------------------NAIVE BAYES CLASSIFICATION-------------------")
