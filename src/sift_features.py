@@ -38,7 +38,7 @@ def sift_build_vocabulary(training_image_paths, d_sample_count, vocabulary_size)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         sift = cv2.SIFT_create()
-        keypoints, descriptors = sift.detectAndCompute(image, None)
+        _, descriptors = sift.detectAndCompute(image, None)
 
         descriptor_samples = descriptors[np.random.randint(descriptors.shape[0], size=d_sample_count)]
 
@@ -59,7 +59,7 @@ def sift_train(training_image_paths, vocabulary, target_feature_matrix):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         sift = cv2.SIFT_create()
-        keypoints, descriptors = sift.detectAndCompute(image, None)
+        _, descriptors = sift.detectAndCompute(image, None)
 
         distance = cdist(descriptors, vocabulary.cluster_centers_, 'euclidean')
 
@@ -87,7 +87,7 @@ def sift_test(testing_image_paths, vocabulary, target_feature_matrix):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         sift = cv2.SIFT_create()
-        keypoints, descriptors = sift.detectAndCompute(image, None)
+        _, descriptors = sift.detectAndCompute(image, None)
 
         distance = cdist(descriptors, vocabulary.cluster_centers_, 'euclidean')
 
