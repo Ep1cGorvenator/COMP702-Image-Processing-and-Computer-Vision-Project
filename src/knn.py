@@ -203,7 +203,7 @@ print(classification_report(testLabelsHM, pipe.predict(testHM)))
 
 #SIFT
 print("\nevaluating SVM accuracy using sift features:")
-pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'poly', C = 10, degree=8))])
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
 pipe.fit(sift_x_train, siftTrainLabels)
 pipe.score(sift_x_test, siftTestLabels)
 print(classification_report(siftTestLabels, pipe.predict(sift_x_test)))
