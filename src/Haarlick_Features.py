@@ -31,7 +31,14 @@ def getRegions(thresh_img):
 #        cv2.waitKey(0)
 #        sys.exit()
     
- #   s_contours = sorted(contours, key = cv2.contourArea, reverse=True)
+    s_contours = sorted(contours, key = cv2.contourArea, reverse=True)
+
+#    for i in range(10):
+#        x, y, w, h = cv2.boundingRect(s_contours[i])
+#        area = cv2.contourArea(s_contours[i])
+#        region = thresh_img[y:y+h, x:x+w]
+#        regions.append(np.asarray(region))
+
 
     for contour in contours:
         count+=1
@@ -67,10 +74,26 @@ def getRegions(thresh_img):
 def getHaarlickFeatures(regions):
 
     features = []
+    max_reg_count=25
 
-    for region in regions:
+    sorted_regions = sorted(regions, key=lambda x: len(x)*len(x[0]))
 
-        feature = []
+    if(len(sorted_regions) < max_reg_count):
+        for region in sorted_regions:
+            textures = mahotas.features.haralick(region)
+            features.append(np.asarray(textures.mean(axis=0)))
+            
+        for i in range(max_reg_count - len(regions)):
+            features.append(np.zeros(13))
+
+    else:
+        for i in range(max_reg_count):
+            region = regions[i]
+            textures = mahotas.features.haralick(region)
+            features.append(np.asarray(textures.mean(axis=0)))
+#    for region in regions:
+
+#        feature = []
     
      #   GLCM = ski.feature.graycomatrix(region,[1,1,1,2],[math.pi/4,math.pi/2,3*math.pi/4,0],256,1)
      #   feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='contrast')))
@@ -86,11 +109,16 @@ def getHaarlickFeatures(regions):
      #   feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='std')))
      #   feature.append(np.mean(ski.feature.graycoprops(GLCM, prop='entropy')))
     
-        textures = mahotas.features.haralick(region)
+#        textures = mahotas.features.haralick(region)
    #     print(np.array(textures.mean(axis=0).shape))
-        features.append(np.asarray(textures.mean(axis=0)))
+#        features.append(np.asarray(textures.mean(axis=0)))
         
     #    features.append(np.array(feature))
+
+#    if(len(regions)<max_reg_count):
+#        for i in range(max_reg_count - len(regions)):
+#            features.append(np.zeros(13))
+
     features=np.asarray(features)
 
     return features.flatten()
@@ -130,17 +158,18 @@ def haarlickTrain(train_img_paths):
         
         print(count)
     
-    padded_train_img = []
-    for imageFeat in training_images_features:
-        if(len(imageFeat)<max_len):
-            padded_train_img.append(np.pad(imageFeat, (0,(max_len-len(imageFeat))), mode='constant', constant_values=0))
-        else:
-            padded_train_img.append(imageFeat)
+#    padded_train_img = []
+#    for imageFeat in training_images_features:
+#        if(len(imageFeat)<max_len):
+#            padded_train_img.append(np.pad(imageFeat, (0,(max_len-len(imageFeat))), mode='constant', constant_values=0))
+#        else:
+#            padded_train_img.append(imageFeat)
 
  #   for imageFeat in training_images_features:
  #       print(imageFeat.shape)
 
-    return padded_train_img
+ #   return padded_train_img
+    return training_images_features
 
 
 def haarlickTest(test_img_paths):
@@ -173,15 +202,16 @@ def haarlickTest(test_img_paths):
         test_images_features.append(np.asarray(imageFeatures))
         print(count)
     
-    padded_test_image_feat=[]
+#    padded_test_image_feat=[]
 
-    for imageFeat in test_images_features:
-        if(len(imageFeat)<max_len):
-            padded_test_image_feat.append(np.pad(imageFeat, (0,(max_len-len(imageFeat))), mode='constant', constant_values=0))
-        else:
-            padded_test_image_feat.append(imageFeat)
+#    for imageFeat in test_images_features:
+#        if(len(imageFeat)<max_len):
+#            padded_test_image_feat.append(np.pad(imageFeat, (0,(max_len-len(imageFeat))), mode='constant', constant_values=0))
+#        else:
+#            padded_test_image_feat.append(imageFeat)
 
   #  for imageFeat in test_images_features:
   #      print(imageFeat.shape)
 
-    return padded_test_image_feat
+#    return padded_test_image_feat
+    return test_images_features
