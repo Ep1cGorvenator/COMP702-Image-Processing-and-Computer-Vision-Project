@@ -17,6 +17,8 @@ from sklearn.pipeline import Pipeline
 
 from pathlib import Path
 
+import sift_features as sf
+
 def image_to_feature_vector(image, size=(32, 32)):
 	# resize the image to a fixed size, then flatten the image into
 	# a list of raw pixel intensities
@@ -118,6 +120,12 @@ print("Hu Moments matrix: {:.2f}MB".format(
 (trainHM, testHM, trainLabelsHM, testLabelsHM) = train_test_split(
 	HUMoments, labels, test_size=0.20, random_state=42)
 
+#SIFT setup
+(trainImagePaths, testImagePaths, siftTrainLabels, siftTestLabels) = train_test_split(
+	imagePaths, labels, test_size=0.2, random_state=42)
+sift_x_train, vocabulary = sf.sift_train(trainImagePaths, 100, 200)
+sift_x_test = sf.sift_test(testImagePaths, vocabulary)
+
 #----------------KNN CLASSIFICATION----------------
 print("\n-------------------KNN CLASSIFICATION-------------------")
 #YOU CAN SPECIFY HOW MANY NEIGHBOURS TO USE WITH THE n_neighbors PARAMETER, 
@@ -193,3 +201,12 @@ pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 1
 pipe.fit(trainHM, trainLabelsHM)
 pipe.score(testHM, testLabelsHM)
 print(classification_report(testLabelsHM, pipe.predict(testHM)))
+
+#SIFT
+
+print("\nevaluating SVM accuracy using sift features:")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(sift_x_train, siftTrainLabels)
+pipe.score(sift_x_test, siftTestLabels)
+print(classification_report(siftTestLabels, pipe.predict(sift_x_test)))
+
