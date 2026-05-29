@@ -19,6 +19,10 @@ from pathlib import Path
 
 import sift_features as sf
 
+from sklearn import tree
+
+from skimage import feature
+
 def image_to_feature_vector(image, size=(32, 32)):
 	# resize the image to a fixed size, then flatten the image into
 	# a list of raw pixel intensities
@@ -49,6 +53,13 @@ def extract_hu_moments(image):
 	# return the Hu Moments as the feature vector
 	return huMoments
 
+def extract_lbp_features(image):
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Compute LBP features
+    features = feature.local_binary_pattern(gray, P=8, R=1, method='uniform')
+    return features
+
 # grab the list of images that we'll be describing
 print("[INFO] describing images...")
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -57,8 +68,10 @@ imagePaths = list(paths.list_images(BASE_DIR / "dataset" / "preprocessed"))
 # initialize the raw pixel intensities matrix, the histogram features matrix, and HU Moments features matrix
 rawImages = []
 features = []
-labels = []
 HUMoments = []
+lbpFeatures = []
+labels = []
+
 
 #----------------FEATURE EXTRACTION----------------
 # loop over the input images
@@ -86,6 +99,7 @@ for (i, imagePath) in enumerate(imagePaths):
 	rawImages.append(pixels)
 	features.append(hist)
 	HUMoments.append(extract_hu_moments(image))
+	lbpFeatures.append(extract_lbp_features(image))
 
 	labels.append(label)
 	# show an update every 1,000 images
@@ -97,15 +111,18 @@ for (i, imagePath) in enumerate(imagePaths):
 rawImages = np.array(rawImages)
 features = np.array(features)
 HUMoments = np.array(HUMoments)
+lbpFeatures = np.array(lbpFeatures)
 labels = np.array(labels)
 
-print("\nHow much memory is being consumed by the raw images matrix and features matrix:")
+print("\nHow much memory is being consumed by creating each feature vector:")
 print("pixels matrix: {:.2f}MB".format(
 	rawImages.nbytes / (1024 * 1000.0)))
 print("features matrix: {:.2f}MB".format(
 	features.nbytes / (1024 * 1000.0)))
 print("Hu Moments matrix: {:.2f}MB".format(
 	HUMoments.nbytes / (1024 * 1000.0)))
+print("LBP Features matrix: {:.2f}MB".format(
+	lbpFeatures.nbytes / (1024 * 1000.0)))
 
 #---------TRAIN TEST SPLIT----------------
 #Using raw pixel intensities as features for training and testing
@@ -120,11 +137,18 @@ print("Hu Moments matrix: {:.2f}MB".format(
 (trainHM, testHM, trainLabelsHM, testLabelsHM) = train_test_split(
 	HUMoments, labels, test_size=0.20, random_state=42)
 
+#LBP setup
+(trainLBP, testLBP, lbpTrainLabels, lbpTestLabels) = train_test_split(
+	lbpFeatures, labels, test_size=0.20, random_state=42)
+
 #SIFT setup
 (trainImagePaths, testImagePaths, siftTrainLabels, siftTestLabels) = train_test_split(
 	imagePaths, labels, test_size=0.2, random_state=42)
 sift_x_train, vocabulary = sf.sift_train(trainImagePaths, 100, 200)
 sift_x_test = sf.sift_test(testImagePaths, vocabulary)
+
+
+
 
 #----------------KNN CLASSIFICATION----------------
 print("\n-------------------KNN CLASSIFICATION-------------------")
@@ -152,10 +176,24 @@ model.fit(trainHM, trainLabelsHM)
 acc = model.score(testHM, testLabelsHM)
 print("Hu Moments accuracy: {:.2f}%".format(acc * 100))
 
+#SIFT
+print("\nevaluating SIFT accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(sift_x_train, siftTrainLabels)
+acc = model.score(sift_x_test, siftTestLabels)
+print("SIFT accuracy: {:.2f}%".format(acc * 100))
+
+# #LBP
+# print("\nevaluating LBP accuracy:")
+# model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+# model.fit(trainLBP, lbpTrainLabels)
+# acc = model.score(testLBP, lbpTestLabels)
+# print("LBP accuracy: {:.2f}%".format(acc * 100))
+
 #----------------NAIVE BAYES CLASSIFICATION----------------
 print("\n\n-------------------NAIVE BAYES CLASSIFICATION-------------------")
 #RAW PIXEL FEATURES
-print("evaluating raw pixel accuracy:")
+print("\nevaluating raw pixel accuracy:")
 nb_classifier_for_raw_pixels = GaussianNB()
 nb_classifier_for_raw_pixels.fit(trainRI, trainRL)
 y_pred = nb_classifier_for_raw_pixels.predict(testRI)
@@ -163,7 +201,7 @@ print("Accuracy:", accuracy_score(testRL, y_pred))
 print(classification_report(testRL, y_pred))
 
 #HISTOGRAM FEATURES
-print("evaluating histogram accuracy:")
+print("\nevaluating histogram accuracy:")
 nb_classifier_for_histograms = GaussianNB()
 nb_classifier_for_histograms.fit(trainFeat, trainLabels)
 y_pred = nb_classifier_for_histograms.predict(testFeat)
@@ -171,13 +209,28 @@ print("Accuracy:", accuracy_score(testLabels, y_pred))
 print(classification_report(testLabels, y_pred))
 
 #HU MOMENTS FEATURES
-print("evaluating Hu Moments accuracy:")	
+print("\nevaluating Hu Moments accuracy:")	
 nb_classifier_for_hu_moments = GaussianNB()
 nb_classifier_for_hu_moments.fit(trainHM, trainLabelsHM)
 y_pred = nb_classifier_for_hu_moments.predict(testHM)
 print("Accuracy:", accuracy_score(testLabelsHM, y_pred))
-print(classification_report(testLabelsHM, y_pred))
+print(classification_report(testLabelsHM, y_pred, zero_division=0))
 
+#SIFT
+print("\nevaluating SIFT accuracy:")
+nb_classifier_for_sift = GaussianNB()
+nb_classifier_for_sift.fit(sift_x_train, siftTrainLabels)
+y_pred = nb_classifier_for_sift.predict(sift_x_test)
+print("Accuracy:", accuracy_score(siftTestLabels, y_pred))
+print(classification_report(siftTestLabels, y_pred))
+
+# #LBP
+# print("\nevaluating LBP accuracy:")
+# nb_classifier_for_lbp = GaussianNB()
+# nb_classifier_for_lbp.fit(trainLBP, lbpTrainLabels)
+# y_pred = nb_classifier_for_lbp.predict(testLBP)
+# print("Accuracy:", accuracy_score(lbpTestLabels, y_pred))
+# print(classification_report(lbpTestLabels, y_pred))
 
 #----------------SVM CLASSIFICATION----------------
 print("\n\n-------------------SVMCLASSIFICATION-------------------")
@@ -208,4 +261,49 @@ pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 1
 pipe.fit(sift_x_train, siftTrainLabels)
 pipe.score(sift_x_test, siftTestLabels)
 print(classification_report(siftTestLabels, pipe.predict(sift_x_test)))
+
+# #LBP
+# print("\nevaluating SVM accuracy using LBP features:")
+# pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+# pipe.fit(trainLBP, lbpTrainLabels)
+# pipe.score(testLBP, lbpTestLabels)
+# print(classification_report(lbpTestLabels, pipe.predict(testLBP)))
+
+#----------------DECISION TREE CLASSIFICATION----------------
+clf = tree.DecisionTreeClassifier()
+print("\n\n-------------------DECISION TREE CLASSIFICATION-------------------")
+#RAW PIXEL FEATURES
+print("evaluating Decision Tree accuracy using raw pixel features:")
+clf.fit(trainRI, trainRL)
+y_pred = clf.predict(testRI)
+print("Accuracy:", accuracy_score(testRL, y_pred))
+print(classification_report(testRL, y_pred))
+
+#HISTOGRAM FEATURES
+print("\nevaluating Decision Tree accuracy using histogram features:")
+clf.fit(trainFeat, trainLabels)
+y_pred = clf.predict(testFeat)
+print("Accuracy:", accuracy_score(testLabels, y_pred))
+print(classification_report(testLabels, y_pred))
+
+#HU MOMENTS FEATURES
+print("\nevaluating Decision Tree accuracy using Hu Moments features:")
+clf.fit(trainHM, trainLabelsHM)
+y_pred = clf.predict(testHM)
+print("Accuracy:", accuracy_score(testLabelsHM, y_pred))
+print(classification_report(testLabelsHM, y_pred, zero_division=0))
+
+#SIFT
+print("\nevaluating Decision Tree accuracy using sift features:")
+clf.fit(sift_x_train, siftTrainLabels)
+y_pred = clf.predict(sift_x_test)
+print("Accuracy:", accuracy_score(siftTestLabels, y_pred))
+print(classification_report(siftTestLabels, y_pred))
+
+# #LBP
+# print("\nevaluating Decision Tree accuracy using LBP features:")
+# clf.fit(trainLBP, lbpTrainLabels)
+# y_pred = clf.predict(testLBP)
+# print("Accuracy:", accuracy_score(lbpTestLabels, y_pred))
+# print(classification_report(lbpTestLabels, y_pred))
 
