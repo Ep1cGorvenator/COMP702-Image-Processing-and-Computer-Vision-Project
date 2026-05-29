@@ -1,4 +1,5 @@
 # import the necessary packages
+from sklearn import tree
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from imutils import paths
@@ -66,7 +67,7 @@ HUMoments = []
 # loop over the input images
 for (i, imagePath) in enumerate(imagePaths):
 	image = cv2.imread(imagePath)
-	image_file = imagePath.rsplit('\\', 1)[-1].rsplit('.jpeg', 1)[0]
+	image_file = os.path.basename(imagePath)
 	
 	if "R100" in image_file:
 		label = "R100"
@@ -130,12 +131,10 @@ sift_x_train, sift_x_test = sf.sift_extract(trainImagePaths, testImagePaths)
 #Haarlick features
 (trainImgPaths, testImgPaths , trainLabelsHaar, testLabelsHaar) = train_test_split(
 	imagePaths, labels, test_size=0.2, random_state=42)
+
 haarlick_train= haar.haarlickTrain(trainImgPaths)
-#print("Training",haarlick_train.shape)
-#print("TrainLabels", trainLabelsHaar)
 haarlick_test = haar.haarlickTest(testImgPaths)
-#print("Testing",haarlick_test.shape)
-#print("TestingLabels",testLabelsHaar)
+
 print("done")
 
 #----------------KNN CLASSIFICATION----------------
@@ -164,6 +163,13 @@ model.fit(trainHM, trainLabelsHM)
 acc = model.score(testHM, testLabelsHM)
 print("Hu Moments accuracy: {:.2f}%".format(acc * 100))
 
+#SIFT
+print("\nevaluating SIFT accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(sift_x_train, siftTrainLabels)
+acc = model.score(sift_x_test, siftTestLabels)
+print("SIFT accuracy: {:.2f}%".format(acc * 100))
+
 #HAARLICK FEATURES
 print("\nevaluating Haarlick features accuracy:")
 model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
@@ -172,59 +178,108 @@ acc = model.score(haarlick_test, testLabelsHaar)
 print("Haarlick accuracy: {:.2f}%".format(acc * 100))
 
 #----------------NAIVE BAYES CLASSIFICATION----------------
-print("\n\n-------------------NAIVE BAYES CLASSIFICATION-------------------")
+print("\n\n-------------------NAIVE BAYES CLASSIFICATION-------------------\n")
 #RAW PIXEL FEATURES
 print("evaluating raw pixel accuracy:")
 nb_classifier_for_raw_pixels = GaussianNB()
 nb_classifier_for_raw_pixels.fit(trainRI, trainRL)
 y_pred = nb_classifier_for_raw_pixels.predict(testRI)
-print("Accuracy:", accuracy_score(testRL, y_pred))
-print(classification_report(testRL, y_pred))
+print("raw pixel accuracy: {:.2f}%".format(nb_classifier_for_raw_pixels.score(testRI, testRL) * 100))
 
 #HISTOGRAM FEATURES
-print("evaluating histogram accuracy:")
+print("\nevaluating histogram accuracy:")
 nb_classifier_for_histograms = GaussianNB()
 nb_classifier_for_histograms.fit(trainFeat, trainLabels)
 y_pred = nb_classifier_for_histograms.predict(testFeat)
-print("Accuracy:", accuracy_score(testLabels, y_pred))
-print(classification_report(testLabels, y_pred))
+print("histogram accuracy: {:.2f}%".format(nb_classifier_for_histograms.score(testFeat, testLabels) * 100))
 
 #HU MOMENTS FEATURES
-print("evaluating Hu Moments accuracy:")	
+print("\nevaluating Hu Moments accuracy:")	
 nb_classifier_for_hu_moments = GaussianNB()
 nb_classifier_for_hu_moments.fit(trainHM, trainLabelsHM)
 y_pred = nb_classifier_for_hu_moments.predict(testHM)
-print("Accuracy:", accuracy_score(testLabelsHM, y_pred))
-print(classification_report(testLabelsHM, y_pred))
+print("Hu Moments accuracy: {:.2f}%".format(nb_classifier_for_hu_moments.score(testHM, testLabelsHM) * 100))
 
+#SIFT
+print("\nevaluating SIFT accuracy:")
+nb_classifier_for_sift = GaussianNB()
+nb_classifier_for_sift.fit(sift_x_train, siftTrainLabels)
+y_pred = nb_classifier_for_sift.predict(sift_x_test)
+print("SIFT accuracy: {:.2f}%".format(nb_classifier_for_sift.score(sift_x_test, siftTestLabels) * 100))
+
+#HAARLICK FEATURES
+print("\nevaluating Haarlick features accuracy:")
+nb_classifier_for_haarlick = GaussianNB()
+nb_classifier_for_haarlick.fit(haarlick_train, trainLabelsHaar)
+y_pred = nb_classifier_for_haarlick.predict(haarlick_test)
+print("Haarlick accuracy: {:.2f}%".format(nb_classifier_for_haarlick.score(haarlick_test, testLabelsHaar) * 100))
 
 #----------------SVM CLASSIFICATION----------------
-print("\n\n-------------------SVMCLASSIFICATION-------------------")
+print("\n\n-------------------SVM CLASSIFICATION-------------------\n")
 #RAW PIXEL FEATURES
 print("evaluating SVM accuracy using raw pixel features:")
 pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
 pipe.fit(trainRI, trainRL)
 pipe.score(testRI, testRL)
-print(classification_report(testRL, pipe.predict(testRI)))
+print("SVM accuracy using raw pixel features: {:.2f}%".format(pipe.score(testRI, testRL) * 100))
 
 #HISTOGRAM FEATURES
 print("\nevaluating SVM accuracy using histogram features:")
 pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
 pipe.fit(trainFeat, trainLabels)
 pipe.score(testFeat, testLabels)
-print(classification_report(testLabels, pipe.predict(testFeat)))
+print("SVM accuracy using histogram features: {:.2f}%".format(pipe.score(testFeat, testLabels) * 100))
 
 #HU MOMENTS FEATURES
 print("\nevaluating SVM accuracy using Hu Moments features:")
 pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
 pipe.fit(trainHM, trainLabelsHM)
 pipe.score(testHM, testLabelsHM)
-print(classification_report(testLabelsHM, pipe.predict(testHM)))
+print("SVM accuracy using Hu Moments features: {:.2f}%".format(pipe.score(testHM, testLabelsHM) * 100))
 
 #SIFT
 print("\nevaluating SVM accuracy using sift features:")
 pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
 pipe.fit(sift_x_train, siftTrainLabels)
 pipe.score(sift_x_test, siftTestLabels)
-print(classification_report(siftTestLabels, pipe.predict(sift_x_test)))
+print("SVM accuracy using sift features: {:.2f}%".format(pipe.score(sift_x_test,siftTestLabels) * 100))
 
+#HAARLICK FEATURES
+print("\nevaluating SVM accuracy using Haarlick features:")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(haarlick_train, trainLabelsHaar)
+pipe.score(haarlick_test, testLabelsHaar)
+print("SVM accuracy using Haarlick features: {:.2f}%".format(pipe.score(haarlick_test, testLabelsHaar) * 100))
+
+#----------------DECISION TREE CLASSIFICATION----------------
+clf = tree.DecisionTreeClassifier()
+print("\n\n-------------------DECISION TREE CLASSIFICATION-------------------")
+#RAW PIXEL FEATURES
+print("\nevaluating Decision Tree accuracy using raw pixel features:")
+clf.fit(trainRI, trainRL)
+y_pred = clf.predict(testRI)
+print("raw pixel Accuracy: {:.2f}%".format(accuracy_score(testRL, y_pred) * 100))
+
+#HISTOGRAM FEATURES
+print("\nevaluating Decision Tree accuracy using histogram features:")
+clf.fit(trainFeat, trainLabels)
+y_pred = clf.predict(testFeat)
+print("Histogram features Accuracy: {:.2f}%".format(accuracy_score(testLabels, y_pred) * 100))
+
+#HU MOMENTS FEATURES
+print("\nevaluating Decision Tree accuracy using Hu Moments features:")
+clf.fit(trainHM, trainLabelsHM)
+y_pred = clf.predict(testHM)
+print("HU Moments Accuracy: {:.2f}%".format(accuracy_score(testLabelsHM, y_pred) * 100))
+
+#SIFT
+print("\nevaluating Decision Tree accuracy using sift features:")
+clf.fit(sift_x_train, siftTrainLabels)
+y_pred = clf.predict(sift_x_test)
+print("SIFT Accuracy: {:.2f}%".format(accuracy_score(siftTestLabels, y_pred) * 100))
+
+#HARALICK
+print("\nevaluating Decision Tree accuracy using Haralick features:")
+clf.fit(haarlick_train, trainLabelsHaar)
+y_pred = clf.predict(haarlick_test)
+print("Haarlick Accuracy: {:.2f}%".format(accuracy_score(testLabelsHaar, y_pred) * 100))
