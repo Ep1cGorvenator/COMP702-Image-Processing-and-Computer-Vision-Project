@@ -1,3 +1,6 @@
+import threading
+import copy
+
 import numpy as np
 import cv2
 
@@ -5,20 +8,30 @@ from sklearn.cluster import KMeans
 
 from scipy.spatial.distance import cdist
 
-#image_paths = list(paths.list_images('dataset/processed/'))
+def sift_extract(training_image_paths, testing_image_paths, d_sample_count=100, vocabulary_size=200):
+    print('vocabulary calculation...')
+    vocabulary = sift_build_vocabulary(training_image_paths, d_sample_count, vocabulary_size)
+    print('vocabulary calculation complete')
 
-#print(f'opencv version: {cv2.__version__}')
+    num_train_images = len(training_image_paths)
+    num_test_images = len(testing_image_paths)
+    x_train = np.empty((num_train_images, vocabulary_size))
+    x_test = np.empty((num_test_images, vocabulary_size))
 
-#d_sample_count = 100
-#image_count = len(image_paths)
-#segmented_feature_vectors = np.zeros((image_count * d_sample_count, 128))
-#final_feature_vectors = []
-#vocabulary_size = 5
+    train_thread = threading.Thread(target=sift_train, args=(training_image_paths, vocabulary, x_train))
+    test_thread = threading.Thread(target=sift_test, args=(testing_image_paths, vocabulary, x_test))
 
-def sift_train(training_image_paths, d_sample_count, vocabulary_size):
+    train_thread.start()
+    test_thread.start()
+
+    train_thread.join()
+    test_thread.join()
+
+    return x_train, x_test
+
+def sift_build_vocabulary(training_image_paths, d_sample_count, vocabulary_size):
     num_images = len(training_image_paths)
     segmented_feature_vectors = np.zeros((num_images * d_sample_count, 128))
-    final_feature_vectors = []
 
     for path_idx in range(num_images):
         image = cv2.imread(training_image_paths[path_idx])
@@ -30,10 +43,16 @@ def sift_train(training_image_paths, d_sample_count, vocabulary_size):
         descriptor_samples = descriptors[np.random.randint(descriptors.shape[0], size=d_sample_count)]
 
         segmented_feature_vectors[(path_idx + d_sample_count):(path_idx + 2*d_sample_count),] = descriptor_samples[:]
-        #print(segmented_feature_vectors)
-        #print(f'training loop 1 progress: {(path_idx / num_images) * 100}%', flush=True)
 
     vocabulary = KMeans(n_clusters=vocabulary_size, random_state=0, n_init='auto').fit(segmented_feature_vectors)
+
+    return vocabulary
+
+
+def sift_train(training_image_paths, vocabulary, target_feature_matrix):
+    print('sift train...')
+    num_images = len(training_image_paths)
+    vocabulary_size = len(vocabulary.cluster_centers_)
 
     for path_idx in range(num_images):
         image = cv2.imread(training_image_paths[path_idx])
@@ -50,21 +69,17 @@ def sift_train(training_image_paths, d_sample_count, vocabulary_size):
         for assignment_id in bin_assignment:
             image_features[assignment_id] += 1
 
-        final_feature_vectors.append(image_features)
+        target_feature_matrix[path_idx] = image_features
 
-        #print(f'training loop 2 progress: {(path_idx / num_images) * 100}%', flush=True)
+    features_norm_div = np.linalg.norm(target_feature_matrix, axis=1)
+    for i in range(target_feature_matrix.shape[0]):
+        target_feature_matrix[i] = target_feature_matrix[i] / features_norm_div[i]
 
-    final_feature_vectors = np.asarray(final_feature_vectors)
+    print('sift train ended')
 
-    features_norm_div = np.linalg.norm(final_feature_vectors, axis=1)
-    for i in range(final_feature_vectors.shape[0]):
-        final_feature_vectors[i] = final_feature_vectors[i] / features_norm_div[i]
-
-    return final_feature_vectors, vocabulary
-
-def sift_test(testing_image_paths, vocabulary):
+def sift_test(testing_image_paths, vocabulary, target_feature_matrix):
+    print('sift test...')
     num_images = len(testing_image_paths)
-    final_feature_vectors = []
     vocabulary_size = len(vocabulary.cluster_centers_)
 
     for path_idx in range(num_images):
@@ -82,14 +97,11 @@ def sift_test(testing_image_paths, vocabulary):
         for assignment_id in bin_assignment:
             image_features[assignment_id] += 1
 
-        final_feature_vectors.append(image_features)
+        target_feature_matrix[path_idx] = image_features
 
-        #print(f'testing loop progress: {(path_idx / num_images) * 100}%', flush=True)
 
-    final_feature_vectors = np.asarray(final_feature_vectors)
+    features_norm_div = np.linalg.norm(target_feature_matrix, axis=1)
+    for i in range(target_feature_matrix.shape[0]):
+        target_feature_matrix[i] = target_feature_matrix[i] / features_norm_div[i]
 
-    features_norm_div = np.linalg.norm(final_feature_vectors, axis=1)
-    for i in range(final_feature_vectors.shape[0]):
-        final_feature_vectors[i] = final_feature_vectors[i] / features_norm_div[i]
-
-    return final_feature_vectors
+    print('sift test ended')

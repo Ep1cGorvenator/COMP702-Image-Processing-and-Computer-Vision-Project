@@ -123,8 +123,7 @@ print("Hu Moments matrix: {:.2f}MB".format(
 #SIFT setup
 (trainImagePaths, testImagePaths, siftTrainLabels, siftTestLabels) = train_test_split(
 	imagePaths, labels, test_size=0.2, random_state=42)
-sift_x_train, vocabulary = sf.sift_train(trainImagePaths, 100, 200)
-sift_x_test = sf.sift_test(testImagePaths, vocabulary)
+sift_x_train, sift_x_test = sf.sift_extract(trainImagePaths, testImagePaths)
 
 #----------------KNN CLASSIFICATION----------------
 print("\n-------------------KNN CLASSIFICATION-------------------")
@@ -204,7 +203,7 @@ print(classification_report(testLabelsHM, pipe.predict(testHM)))
 
 #SIFT
 print("\nevaluating SVM accuracy using sift features:")
-pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'poly', C = 10, degree=8))])
 pipe.fit(sift_x_train, siftTrainLabels)
 pipe.score(sift_x_test, siftTestLabels)
 print(classification_report(siftTestLabels, pipe.predict(sift_x_test)))
