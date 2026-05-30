@@ -182,6 +182,26 @@ haarlick_train  = haar.haarlickTrain(trainImagePaths)
 haarlick_test   = haar.haarlickTest(testImagePaths)
 print("[INFO] Haralick extraction complete")
 
+# resulting feature array
+train_array_dim_y = sift_x_train.shape[0]
+test_array_dim_y = sift_x_test.shape[0]
+
+total_vector_dim = huMoments_adaptive_train.shape[1] + huMoments_otsu_train.shape[1] + huMoments_canny_train.shape[1] + sift_x_train.shape[1] + orb_x_train.shape[1] + haarlick_train.shape[1]
+final_train_x = np.empty((train_array_dim_y, total_vector_dim))
+final_test_x = np.empty((test_array_dim_y, total_vector_dim))
+
+for idx in range(len(final_train_x)):
+    resulting_feature_vector = np.hstack([huMoments_adaptive_train[idx], huMoments_otsu_train[idx], huMoments_canny_train[idx], sift_x_train[idx], orb_x_train[idx], haarlick_train[idx]])
+    final_train_x[idx] = resulting_feature_vector
+
+for idx in range(len(final_test_x)):
+    resulting_feature_vector = np.hstack([huMoments_adaptive_test[idx], huMoments_otsu_test[idx], huMoments_canny_test[idx], sift_x_test[idx], orb_x_test[idx], haarlick_test[idx]])
+    final_test_x[idx] = resulting_feature_vector
+
+scaler = StandardScaler()
+final_train_x = scaler.fit_transform(final_train_x)
+final_test_x = scaler.transform(final_test_x)
+
 # ── Memory Report ──────────────────────────────────────────────────────────
 
 print(f"\n{'─' * 55}")
@@ -248,6 +268,14 @@ model.fit(orb_x_train, orbTrainLabels)
 acc = model.score(orb_x_test, orbTestLabels)  
 print("ORB accuracy: {:.2f}%".format(acc * 100))
 
+# final features
+print("\nevaluating resulting features accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(final_train_x, siftTrainLabels) 
+acc = model.score(final_test_x, siftTestLabels)  
+print("final feature accuracy: {:.2f}%".format(acc * 100))
+
+
 #----------------SVM CLASSIFICATION----------------
 print("\n\n-------------------SVM CLASSIFICATION-------------------\n")
 #RAW PIXEL FEATURES — commented out, variables undefined
@@ -298,6 +326,14 @@ pipe.fit(orb_x_train, orbTrainLabels)
 pipe.score(orb_x_test, orbTestLabels)
 print("SVM accuracy using ORB features: {:.2f}%".format(pipe.score(orb_x_test, orbTestLabels) * 100))
 
+# resulting
+print("\nevaluating SVM accuracy using resulting features:")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(final_train_x, siftTrainLabels)
+pipe.score(final_test_x, siftTestLabels)
+print("SVM accuracy using resulting features: {:.2f}%".format(pipe.score(final_test_x, siftTestLabels) * 100))
+
+
 #----------------DECISION TREE CLASSIFICATION----------------
 clf = tree.DecisionTreeClassifier()
 print("\n\n-------------------DECISION TREE CLASSIFICATION-------------------")
@@ -341,3 +377,9 @@ print("\nevaluating Decision Tree accuracy using ORB features:")
 clf.fit(orb_x_train, orbTrainLabels)
 y_pred = clf.predict(orb_x_test)
 print("ORB Accuracy: {:.2f}%".format(accuracy_score(orbTestLabels, y_pred) * 100))
+
+#resulting
+print("\nevaluating Decision Tree accuracy using resulting features:")
+clf.fit(final_train_x, siftTrainLabels)
+y_pred = clf.predict(final_test_x)
+print("Resulting Accuracy: {:.2f}%".format(accuracy_score(siftTestLabels, y_pred) * 100))
