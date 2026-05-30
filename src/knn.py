@@ -141,55 +141,61 @@ huMoments_train = hu.huMomentTrain(trainImagePaths)
 huMoments_test = hu.huMomentTest(testImagePaths)
 print("[INFO] HU Moment extraction using OTSU thresholding complete")
 
-# # ── SIFT Features ──────────────────────────────────────────────────────────
+#USING CANNY EDGE DETECTION
+print("\n[INFO] Extracting HU Moment features using Canny edge detection...")
+huMoments_canny_train = hu.huMomentTrainCanny(trainImagePaths)
+huMoments_canny_test  = hu.huMomentTestCanny(testImagePaths)
+print("[INFO] HU Moment extraction using Canny edge detection complete")
 
-# print("\n[INFO] Extracting SIFT features...")
-# siftTrainLabels = np.array([get_label(p) for p in trainImagePaths])
-# siftTestLabels  = np.array([get_label(p) for p in testImagePaths])
+# ── SIFT Features ──────────────────────────────────────────────────────────
 
-# sift_x_train, sift_x_test = sf.sift_extract(
-#     trainImagePaths,
-#     testImagePaths
-# )
-# print("[INFO] SIFT extraction complete")
+print("\n[INFO] Extracting SIFT features...")
+siftTrainLabels = np.array([get_label(p) for p in trainImagePaths])
+siftTestLabels  = np.array([get_label(p) for p in testImagePaths])
 
-# # ── ORB Features ───────────────────────────────────────────────────────────
+sift_x_train, sift_x_test = sf.sift_extract(
+    trainImagePaths,
+    testImagePaths
+)
+print("[INFO] SIFT extraction complete")
 
-# print("\n[INFO] Extracting ORB features...")
-# orbTrainLabels = np.array([get_label(p) for p in trainImagePaths])
-# orbTestLabels  = np.array([get_label(p) for p in testImagePaths])
+# ── ORB Features ───────────────────────────────────────────────────────────
 
-# print("\n[INFO] Extracting ORB features...")
-# orb_x_train, orb_x_test = of.orb_extract(
-#     trainImagePaths,
-#     testImagePaths
-# )
-# print("[INFO] ORB extraction complete")
+print("\n[INFO] Extracting ORB features...")
+orbTrainLabels = np.array([get_label(p) for p in trainImagePaths])
+orbTestLabels  = np.array([get_label(p) for p in testImagePaths])
 
-# # ── Haralick Features ──────────────────────────────────────────────────────
+print("\n[INFO] Extracting ORB features...")
+orb_x_train, orb_x_test = of.orb_extract(
+    trainImagePaths,
+    testImagePaths
+)
+print("[INFO] ORB extraction complete")
 
-# print("\n[INFO] Extracting Haralick features...")
-# trainLabelsHaar = np.array([get_label(p) for p in trainImagePaths])
-# testLabelsHaar  = np.array([get_label(p) for p in testImagePaths])
+# ── Haralick Features ──────────────────────────────────────────────────────
 
-# haarlick_train  = haar.haarlickTrain(trainImagePaths)
-# haarlick_test   = haar.haarlickTest(testImagePaths)
-# print("[INFO] Haralick extraction complete")
+print("\n[INFO] Extracting Haralick features...")
+trainLabelsHaar = np.array([get_label(p) for p in trainImagePaths])
+testLabelsHaar  = np.array([get_label(p) for p in testImagePaths])
 
-# # ── Memory Report ──────────────────────────────────────────────────────────
+haarlick_train  = haar.haarlickTrain(trainImagePaths)
+haarlick_test   = haar.haarlickTest(testImagePaths)
+print("[INFO] Haralick extraction complete")
 
-# print(f"\n{'─' * 55}")
-# print(f"  Feature Extraction Complete")
-# print(f"{'─' * 55}")
-# print(f"  Hu Moments train:    {len(huMoments_adaptive_train)}")
-# print(f"  Hu Moments test:     {len(huMoments_adaptive_test)}")
-# print(f"  SIFT train:          {sift_x_train.shape}")
-# print(f"  SIFT test:           {sift_x_test.shape}")
-# print(f"  Haralick train:      {len(haarlick_train)}")
-# print(f"  Haralick test:       {len(haarlick_test)}")
-# print(f"{'─' * 55}")
+# ── Memory Report ──────────────────────────────────────────────────────────
 
-# print("done")
+print(f"\n{'─' * 55}")
+print(f"  Feature Extraction Complete")
+print(f"{'─' * 55}")
+print(f"  Hu Moments train:    {len(huMoments_adaptive_train)}")
+print(f"  Hu Moments test:     {len(huMoments_adaptive_test)}")
+print(f"  SIFT train:          {sift_x_train.shape}")
+print(f"  SIFT test:           {sift_x_test.shape}")
+print(f"  Haralick train:      {len(haarlick_train)}")
+print(f"  Haralick test:       {len(haarlick_test)}")
+print(f"{'─' * 55}")
+
+print("done")
 
 #----------------KNN CLASSIFICATION----------------
 print("\n-------------------KNN CLASSIFICATION-------------------")
@@ -215,70 +221,32 @@ model.fit(huMoments_train, trainLabelsHuMoments)
 acc = model.score(huMoments_test, testLabelsHuMoments)
 print("Hu Moments (no thresholding) accuracy: {:.2f}%".format(acc * 100))
 
-# #SIFT
-# print("\nevaluating SIFT accuracy:")
-# model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
-# model.fit(sift_x_train, siftTrainLabels)
-# acc = model.score(sift_x_test, siftTestLabels)
-# print("SIFT accuracy: {:.2f}%".format(acc * 100))
+print("\nevaluating Hu Moments accuracy (using Canny edge detection):")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(huMoments_canny_train, trainLabelsHuMoments)
+acc = model.score(huMoments_canny_test, testLabelsHuMoments)
+print("Hu Moments (Canny edge detection) accuracy: {:.2f}%".format(acc * 100))
 
-# #HAARLICK FEATURES
-# print("\nevaluating Haarlick features accuracy:")
-# model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
-# model.fit(haarlick_train, trainLabelsHaar)
-# acc = model.score(haarlick_test, testLabelsHaar)
-# print("Haarlick accuracy: {:.2f}%".format(acc * 100))
+#SIFT
+print("\nevaluating SIFT accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(sift_x_train, siftTrainLabels)
+acc = model.score(sift_x_test, siftTestLabels)
+print("SIFT accuracy: {:.2f}%".format(acc * 100))
 
-# #ORB FEATURES
-# print("\nevaluating ORB features accuracy:")
-# model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
-# model.fit(orb_x_train, orbTrainLabels) 
-# acc = model.score(orb_x_test, orbTestLabels)  
-# print("ORB accuracy: {:.2f}%".format(acc * 100))
+#HAARLICK FEATURES
+print("\nevaluating Haarlick features accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(haarlick_train, trainLabelsHaar)
+acc = model.score(haarlick_test, testLabelsHaar)
+print("Haarlick accuracy: {:.2f}%".format(acc * 100))
 
-#----------------NAIVE BAYES CLASSIFICATION----------------
-print("\n\n-------------------NAIVE BAYES CLASSIFICATION-------------------\n")
-#RAW PIXEL FEATURES — commented out, variables undefined
-
-#HU MOMENTS FEATURES
-print("\nevaluating Hu Moments accuracy using adaptive thresholding:")	
-nb_classifier_for_hu_moments = GaussianNB()
-nb_classifier_for_hu_moments.fit(huMoments_adaptive_train, trainLabelsHuMoments)
-y_pred = nb_classifier_for_hu_moments.predict(huMoments_adaptive_test)
-print("Hu Moments accuracy: {:.2f}%".format(nb_classifier_for_hu_moments.score(huMoments_adaptive_test, testLabelsHuMoments) * 100))
-
-print("\nevaluating Hu Moments accuracy using otsu thresholding:")	
-nb_classifier_for_hu_moments = GaussianNB()
-nb_classifier_for_hu_moments.fit(huMoments_otsu_train, trainLabelsHuMoments)
-y_pred = nb_classifier_for_hu_moments.predict(huMoments_otsu_test)
-print("Hu Moments accuracy: {:.2f}%".format(nb_classifier_for_hu_moments.score(huMoments_otsu_test, testLabelsHuMoments) * 100))
-
-print("\nevaluating Hu Moments accuracy using no thresholding:")    
-nb_classifier_for_hu_moments = GaussianNB()
-nb_classifier_for_hu_moments.fit(huMoments_train, trainLabelsHuMoments)
-y_pred = nb_classifier_for_hu_moments.predict(huMoments_test)
-print("Hu Moments accuracy: {:.2f}%".format(nb_classifier_for_hu_moments.score(huMoments_test, testLabelsHuMoments) * 100))
-
-# #SIFT
-# print("\nevaluating SIFT accuracy:")
-# nb_classifier_for_sift = GaussianNB()
-# nb_classifier_for_sift.fit(sift_x_train, siftTrainLabels)
-# y_pred = nb_classifier_for_sift.predict(sift_x_test)
-# print("SIFT accuracy: {:.2f}%".format(nb_classifier_for_sift.score(sift_x_test, siftTestLabels) * 100))
-
-# #HAARLICK FEATURES
-# print("\nevaluating Haarlick features accuracy:")
-# nb_classifier_for_haarlick = GaussianNB()
-# nb_classifier_for_haarlick.fit(haarlick_train, trainLabelsHaar)
-# y_pred = nb_classifier_for_haarlick.predict(haarlick_test)
-# print("Haarlick accuracy: {:.2f}%".format(nb_classifier_for_haarlick.score(haarlick_test, testLabelsHaar) * 100))
-
-# #ORB FEATURES
-# print("\nevaluating ORB features accuracy:")
-# nb_classifier_for_orb = GaussianNB()
-# nb_classifier_for_orb.fit(orb_x_train, orbTrainLabels)
-# y_pred = nb_classifier_for_orb.predict(orb_x_test)
-# print("ORB accuracy: {:.2f}%".format(nb_classifier_for_orb.score(orb_x_test, orbTestLabels) * 100))
+#ORB FEATURES
+print("\nevaluating ORB features accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(orb_x_train, orbTrainLabels) 
+acc = model.score(orb_x_test, orbTestLabels)  
+print("ORB accuracy: {:.2f}%".format(acc * 100))
 
 #----------------SVM CLASSIFICATION----------------
 print("\n\n-------------------SVM CLASSIFICATION-------------------\n")
@@ -303,26 +271,32 @@ pipe.fit(huMoments_train, trainLabelsHuMoments)
 pipe.score(huMoments_test, testLabelsHuMoments)
 print("SVM accuracy using Hu Moments features: {:.2f}%".format(pipe.score(huMoments_test, testLabelsHuMoments) * 100))
 
-# #SIFT
-# print("\nevaluating SVM accuracy using sift features:")
-# pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
-# pipe.fit(sift_x_train, siftTrainLabels)
-# pipe.score(sift_x_test, siftTestLabels)
-# print("SVM accuracy using sift features: {:.2f}%".format(pipe.score(sift_x_test,siftTestLabels) * 100))
+print("\nevaluating SVM accuracy using Hu Moments features (Canny edge detection):")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(huMoments_canny_train, trainLabelsHuMoments)
+acc = pipe.score(huMoments_canny_test, testLabelsHuMoments)
+print("SVM accuracy using Hu Moments features (Canny): {:.2f}%".format(acc * 100))
 
-# #HAARLICK FEATURES
-# print("\nevaluating SVM accuracy using Haarlick features:")
-# pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
-# pipe.fit(haarlick_train, trainLabelsHaar)
-# pipe.score(haarlick_test, testLabelsHaar)
-# print("SVM accuracy using Haarlick features: {:.2f}%".format(pipe.score(haarlick_test, testLabelsHaar) * 100))
+#SIFT
+print("\nevaluating SVM accuracy using sift features:")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(sift_x_train, siftTrainLabels)
+pipe.score(sift_x_test, siftTestLabels)
+print("SVM accuracy using sift features: {:.2f}%".format(pipe.score(sift_x_test,siftTestLabels) * 100))
 
-# #ORB FEATURES
-# print("\nevaluating SVM accuracy using ORB features:")
-# pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
-# pipe.fit(orb_x_train, orbTrainLabels)
-# pipe.score(orb_x_test, orbTestLabels)
-# print("SVM accuracy using ORB features: {:.2f}%".format(pipe.score(orb_x_test, orbTestLabels) * 100))
+#HAARLICK FEATURES
+print("\nevaluating SVM accuracy using Haarlick features:")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(haarlick_train, trainLabelsHaar)
+pipe.score(haarlick_test, testLabelsHaar)
+print("SVM accuracy using Haarlick features: {:.2f}%".format(pipe.score(haarlick_test, testLabelsHaar) * 100))
+
+#ORB FEATURES
+print("\nevaluating SVM accuracy using ORB features:")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(orb_x_train, orbTrainLabels)
+pipe.score(orb_x_test, orbTestLabels)
+print("SVM accuracy using ORB features: {:.2f}%".format(pipe.score(orb_x_test, orbTestLabels) * 100))
 
 #----------------DECISION TREE CLASSIFICATION----------------
 clf = tree.DecisionTreeClassifier()
@@ -344,21 +318,26 @@ clf.fit(huMoments_train, trainLabelsHuMoments)
 y_pred = clf.predict(huMoments_test)
 print("HU Moments Accuracy: {:.2f}%".format(accuracy_score(testLabelsHuMoments, y_pred) * 100))
 
+print("\nevaluating Decision Tree accuracy using Hu Moments features (Canny edge detection):")
+clf.fit(huMoments_canny_train, trainLabelsHuMoments)
+y_pred = clf.predict(huMoments_canny_test)
+print("HU Moments (Canny) Accuracy: {:.2f}%".format(accuracy_score(testLabelsHuMoments, y_pred) * 100))
 
-# #SIFT
-# print("\nevaluating Decision Tree accuracy using sift features:")
-# clf.fit(sift_x_train, siftTrainLabels)
-# y_pred = clf.predict(sift_x_test)
-# print("SIFT Accuracy: {:.2f}%".format(accuracy_score(siftTestLabels, y_pred) * 100))
 
-# #HARALICK
-# print("\nevaluating Decision Tree accuracy using Haralick features:")
-# clf.fit(haarlick_train, trainLabelsHaar)
-# y_pred = clf.predict(haarlick_test)
-# print("Haarlick Accuracy: {:.2f}%".format(accuracy_score(testLabelsHaar, y_pred) * 100))
+#SIFT
+print("\nevaluating Decision Tree accuracy using sift features:")
+clf.fit(sift_x_train, siftTrainLabels)
+y_pred = clf.predict(sift_x_test)
+print("SIFT Accuracy: {:.2f}%".format(accuracy_score(siftTestLabels, y_pred) * 100))
 
-# #ORB FEATURES
-# print("\nevaluating Decision Tree accuracy using ORB features:")
-# clf.fit(orb_x_train, orbTrainLabels)
-# y_pred = clf.predict(orb_x_test)
-# print("ORB Accuracy: {:.2f}%".format(accuracy_score(orbTestLabels, y_pred) * 100))
+#HARALICK
+print("\nevaluating Decision Tree accuracy using Haralick features:")
+clf.fit(haarlick_train, trainLabelsHaar)
+y_pred = clf.predict(haarlick_test)
+print("Haarlick Accuracy: {:.2f}%".format(accuracy_score(testLabelsHaar, y_pred) * 100))
+
+#ORB FEATURES
+print("\nevaluating Decision Tree accuracy using ORB features:")
+clf.fit(orb_x_train, orbTrainLabels)
+y_pred = clf.predict(orb_x_test)
+print("ORB Accuracy: {:.2f}%".format(accuracy_score(orbTestLabels, y_pred) * 100))

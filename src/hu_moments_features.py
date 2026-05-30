@@ -200,3 +200,57 @@ def huMomentTest(test_img_paths):
             
     # Safely convert to a uniform 2D numpy array: shape (N_images, 7)
     return np.array(test_images_features)
+
+
+def huMomentTrainCanny(train_img_paths):
+    print(f"Extracting Hu Moment features (Canny) for {len(train_img_paths)} training images...")
+    training_images_features = []
+    
+    for count, path in enumerate(train_img_paths, 1):
+        image = cv2.imread(path)
+        gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # 1. Blur to remove paper grain
+        blurred = cv2.GaussianBlur(gray_img, (5, 5), 0)
+        
+        # 2. Canny Edge Detection
+        edges = cv2.Canny(blurred, 50, 150)
+        
+        # 3. Morphological Closing to fuse edges into solid blocks
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+        mask = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+        
+        # Pass the fused mask to getRegions
+        regions, _, _ = getRegions(mask)
+        
+        imageFeatures = getHuMomentFeatures(regions)
+        training_images_features.append(imageFeatures)
+        
+        if count % 500 == 0:
+            print(f"Processed {count}/{len(train_img_paths)}")
+            
+    return np.array(training_images_features)
+
+
+def huMomentTestCanny(test_img_paths):
+    print(f"Extracting Hu moment features (Canny) for {len(test_img_paths)} testing images...")
+    test_images_features = []
+    
+    for count, path in enumerate(test_img_paths, 1):
+        image = cv2.imread(path)
+        gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        blurred = cv2.GaussianBlur(gray_img, (5, 5), 0)
+        edges = cv2.Canny(blurred, 50, 150)
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
+        mask = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+        regions, _, _ = getRegions(mask)
+
+        imageFeatures = getHuMomentFeatures(regions)
+        test_images_features.append(imageFeatures)
+        
+        if count % 10 == 0:
+            print(f"Processed {count}/{len(test_img_paths)}")
+            
+    return np.array(test_images_features)
