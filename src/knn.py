@@ -20,6 +20,8 @@ from pathlib import Path
 
 import sift_features as sf
 
+import orb_features as of
+
 import Haarlick_Features as haar
 
 def image_to_feature_vector(image, size=(32, 32)):
@@ -52,103 +54,11 @@ def extract_hu_moments(image):
 	# return the Hu Moments as the feature vector
 	return huMoments
 
-# ── COMMENTED OUT — replaced with directory-based split ───────────────────
-# Original approach loaded all images and used sklearn train_test_split
-# Replaced to respect our predefined train/test directory structure
-
-# # grab the list of images that we'll be describing
-# print("[INFO] describing images...")
-# BASE_DIR = Path(__file__).resolve().parent.parent
-# imagePaths = list(paths.list_images(BASE_DIR / "dataset" / "preprocessed"))
-
-# # initialize the raw pixel intensities matrix, the histogram features matrix, and HU Moments features matrix
-# rawImages = []
-# features = []
-# labels = []
-# HUMoments = []
-
-# #----------------FEATURE EXTRACTION----------------
-# # loop over the input images
-# for (i, imagePath) in enumerate(imagePaths):
-# 	image = cv2.imread(imagePath)
-# 	image_file = os.path.basename(imagePath)
-	
-# 	if "R100" in image_file:
-# 		label = "R100"
-# 	elif "R200" in image_file:	
-# 		label = "R200"
-# 	elif "R50" in image_file:
-# 		label = "R50"
-# 	elif "R10" in image_file:
-# 		label = "R10"	
-# 	elif "R20" in image_file:
-# 		label = "R20"
-# 	# extract raw pixel intensity "features"
-# 	pixels = image_to_feature_vector(image)
-# 	# extract color histogram to characterize the color distribution of the pixels in the image
-# 	hist = extract_color_histogram(image)
-
-# 	# update the raw images, features, and labels matricies,
-# 	# respectively
-# 	rawImages.append(pixels)
-# 	features.append(hist)
-# 	HUMoments.append(extract_hu_moments(image))
-
-# 	labels.append(label)
-# 	# show an update every 1,000 images
-# 	if i > 0 and i % 1000 == 0:
-# 		print("[INFO] processed {}/{}".format(i, len(imagePaths)))
-	
-# # show some information on the memory consumed by the raw images
-# # matrix and features matrix
-# rawImages = np.array(rawImages)
-# features = np.array(features)
-# HUMoments = np.array(HUMoments)
-# labels = np.array(labels)
-
-# print("\nHow much memory is being consumed by the raw images matrix and features matrix:")
-# print("pixels matrix: {:.2f}MB".format(
-# 	rawImages.nbytes / (1024 * 1000.0)))
-# print("features matrix: {:.2f}MB".format(
-# 	features.nbytes / (1024 * 1000.0)))
-# print("Hu Moments matrix: {:.2f}MB".format(
-# 	HUMoments.nbytes / (1024 * 1000.0)))
-
-# #---------TRAIN TEST SPLIT----------------
-# #Using raw pixel intensities as features for training and testing
-# (trainRI, testRI, trainRL, testRL) = train_test_split(
-# 	rawImages, labels, test_size=0.20, random_state=42)
-
-# #Using color histograms as features for training and testing
-# (trainFeat, testFeat, trainLabels, testLabels) = train_test_split(
-# 	features, labels, test_size=0.20, random_state=42)
-
-# #Using HU Moments as features for training and testing
-# (trainHM, testHM, trainLabelsHM, testLabelsHM) = train_test_split(
-# 	HUMoments, labels, test_size=0.20, random_state=42)
-
-# #SIFT setup
-# (trainImagePaths, testImagePaths, siftTrainLabels, siftTestLabels) = train_test_split(
-# 	imagePaths, labels, test_size=0.2, random_state=42)
-# sift_x_train, sift_x_test = sf.sift_extract(trainImagePaths, testImagePaths)
-
-# #Haarlick features
-# (trainImgPaths, testImgPaths , trainLabelsHaar, testLabelsHaar) = train_test_split(
-# 	imagePaths, labels, test_size=0.2, random_state=42)
-
-# haarlick_train= haar.haarlickTrain(trainImgPaths)
-# haarlick_test = haar.haarlickTest(testImgPaths)
-
-# ── Directory-Based Train/Test Split ───────────────────────────────────────
-# Loads images from our predefined directory structure
-# Respects the train/test split defined during augmentation
-# Training: dataset/preprocessed/train/
-# Testing:  dataset/preprocessed/test/clean/
 
 BASE_DIR     = Path(__file__).resolve().parent.parent
 PREPROC_BASE = BASE_DIR / "dataset" / "preprocessed"
 TRAIN_PATH   = PREPROC_BASE / "train"
-TEST_PATH    = PREPROC_BASE / "test" / "clean"
+TEST_PATH    = PREPROC_BASE / "test" 
 
 # ── Label Extraction ───────────────────────────────────────────────────────
 
@@ -212,17 +122,14 @@ print(f"  Test images:      {len(testImagePaths)}")
 print(f"  Total:            {len(trainImagePaths) + len(testImagePaths)}")
 print(f"{'─' * 55}")
 
-# Temporarily stop here to verify counts before running full extraction
-# Comment out the line below once verified
-import sys
 # ── Feature Extraction ─────────────────────────────────────────────────────
-# sys.exit("[INFO] Verification complete — comment out sys.exit() to run full pipeline")
 
 # ── Hu Moments ─────────────────────────────────────────────────────────────
 
 print("\n[INFO] Extracting Hu Moments — Training...")
 trainHM         = []
 trainLabelsHM   = []
+
 
 for (i, image_path) in enumerate(trainImagePaths):
     image = cv2.imread(str(image_path))
@@ -250,10 +157,12 @@ for (i, image_path) in enumerate(testImagePaths):
     testHM.append(extract_hu_moments(image))
     testLabelsHM.append(label)
 
+#---------HU MOMENTS-----------------
 trainHM       = np.array(trainHM)
 testHM        = np.array(testHM)
 trainLabelsHM = np.array(trainLabelsHM)
 testLabelsHM  = np.array(testLabelsHM)
+
 
 print(f"[INFO] Hu Moments — Train: {trainHM.shape} | Test: {testHM.shape}")
 
@@ -268,6 +177,19 @@ sift_x_train, sift_x_test = sf.sift_extract(
     testImagePaths
 )
 print("[INFO] SIFT extraction complete")
+
+# ── ORB Features ───────────────────────────────────────────────────────────
+
+print("\n[INFO] Extracting ORB features...")
+orbTrainLabels = np.array([get_label(p) for p in trainImagePaths])
+orbTestLabels  = np.array([get_label(p) for p in testImagePaths])
+
+print("\n[INFO] Extracting ORB features...")
+orb_x_train, orb_x_test = of.orb_extract(
+    trainImagePaths,
+    testImagePaths
+)
+print("[INFO] ORB extraction complete")
 
 # ── Haralick Features ──────────────────────────────────────────────────────
 
@@ -299,20 +221,6 @@ print("\n-------------------KNN CLASSIFICATION-------------------")
 #YOU CAN SPECIFY HOW MANY NEIGHBOURS TO USE WITH THE n_neighbors PARAMETER, 
 # AND HOW MANY CPU CORES TO USE WITH THE n_jobs PARAMETER
 
-# #RAW PIXEL FEATURES — commented out, variables undefined
-# print("\nevaluating raw pixel accuracy:")
-# model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
-# model.fit(trainRI, trainRL)
-# acc = model.score(testRI, testRL)
-# print("raw pixel accuracy: {:.2f}%".format(acc * 100))
-
-# #HISTOGRAM FEATURES — commented out, variables undefined
-# print("\nevaluating histogram accuracy:")
-# model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
-# model.fit(trainFeat, trainLabels)
-# acc = model.score(testFeat, testLabels)
-# print("histogram accuracy: {:.2f}%".format(acc * 100))
-
 #HU MOMENTS FEATURES
 print("\nevaluating Hu Moments accuracy:")
 model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
@@ -334,21 +242,16 @@ model.fit(haarlick_train, trainLabelsHaar)
 acc = model.score(haarlick_test, testLabelsHaar)
 print("Haarlick accuracy: {:.2f}%".format(acc * 100))
 
+#ORB FEATURES
+print("\nevaluating ORB features accuracy:")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(orb_x_train, orbTrainLabels) 
+acc = model.score(orb_x_test, orbTestLabels)  
+print("ORB accuracy: {:.2f}%".format(acc * 100))
+
 #----------------NAIVE BAYES CLASSIFICATION----------------
 print("\n\n-------------------NAIVE BAYES CLASSIFICATION-------------------\n")
 #RAW PIXEL FEATURES — commented out, variables undefined
-# print("evaluating raw pixel accuracy:")
-# nb_classifier_for_raw_pixels = GaussianNB()
-# nb_classifier_for_raw_pixels.fit(trainRI, trainRL)
-# y_pred = nb_classifier_for_raw_pixels.predict(testRI)
-# print("raw pixel accuracy: {:.2f}%".format(nb_classifier_for_raw_pixels.score(testRI, testRL) * 100))
-
-#HISTOGRAM FEATURES — commented out, variables undefined
-# print("\nevaluating histogram accuracy:")
-# nb_classifier_for_histograms = GaussianNB()
-# nb_classifier_for_histograms.fit(trainFeat, trainLabels)
-# y_pred = nb_classifier_for_histograms.predict(testFeat)
-# print("histogram accuracy: {:.2f}%".format(nb_classifier_for_histograms.score(testFeat, testLabels) * 100))
 
 #HU MOMENTS FEATURES
 print("\nevaluating Hu Moments accuracy:")	
@@ -371,21 +274,16 @@ nb_classifier_for_haarlick.fit(haarlick_train, trainLabelsHaar)
 y_pred = nb_classifier_for_haarlick.predict(haarlick_test)
 print("Haarlick accuracy: {:.2f}%".format(nb_classifier_for_haarlick.score(haarlick_test, testLabelsHaar) * 100))
 
+#ORB FEATURES
+print("\nevaluating ORB features accuracy:")
+nb_classifier_for_orb = GaussianNB()
+nb_classifier_for_orb.fit(orb_x_train, orbTrainLabels)
+y_pred = nb_classifier_for_orb.predict(orb_x_test)
+print("ORB accuracy: {:.2f}%".format(nb_classifier_for_orb.score(orb_x_test, orbTestLabels) * 100))
+
 #----------------SVM CLASSIFICATION----------------
 print("\n\n-------------------SVM CLASSIFICATION-------------------\n")
 #RAW PIXEL FEATURES — commented out, variables undefined
-# print("evaluating SVM accuracy using raw pixel features:")
-# pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
-# pipe.fit(trainRI, trainRL)
-# pipe.score(testRI, testRL)
-# print("SVM accuracy using raw pixel features: {:.2f}%".format(pipe.score(testRI, testRL) * 100))
-
-#HISTOGRAM FEATURES — commented out, variables undefined
-# print("\nevaluating SVM accuracy using histogram features:")
-# pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
-# pipe.fit(trainFeat, trainLabels)
-# pipe.score(testFeat, testLabels)
-# print("SVM accuracy using histogram features: {:.2f}%".format(pipe.score(testFeat, testLabels) * 100))
 
 #HU MOMENTS FEATURES
 print("\nevaluating SVM accuracy using Hu Moments features:")
@@ -408,20 +306,16 @@ pipe.fit(haarlick_train, trainLabelsHaar)
 pipe.score(haarlick_test, testLabelsHaar)
 print("SVM accuracy using Haarlick features: {:.2f}%".format(pipe.score(haarlick_test, testLabelsHaar) * 100))
 
+#ORB FEATURES
+print("\nevaluating SVM accuracy using ORB features:")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(orb_x_train, orbTrainLabels)
+pipe.score(orb_x_test, orbTestLabels)
+print("SVM accuracy using ORB features: {:.2f}%".format(pipe.score(orb_x_test, orbTestLabels) * 100))
+
 #----------------DECISION TREE CLASSIFICATION----------------
 clf = tree.DecisionTreeClassifier()
 print("\n\n-------------------DECISION TREE CLASSIFICATION-------------------")
-#RAW PIXEL FEATURES — commented out, variables undefined
-# print("\nevaluating Decision Tree accuracy using raw pixel features:")
-# clf.fit(trainRI, trainRL)
-# y_pred = clf.predict(testRI)
-# print("raw pixel Accuracy: {:.2f}%".format(accuracy_score(testRL, y_pred) * 100))
-
-#HISTOGRAM FEATURES — commented out, variables undefined
-# print("\nevaluating Decision Tree accuracy using histogram features:")
-# clf.fit(trainFeat, trainLabels)
-# y_pred = clf.predict(testFeat)
-# print("Histogram features Accuracy: {:.2f}%".format(accuracy_score(testLabels, y_pred) * 100))
 
 #HU MOMENTS FEATURES
 print("\nevaluating Decision Tree accuracy using Hu Moments features:")
@@ -440,3 +334,9 @@ print("\nevaluating Decision Tree accuracy using Haralick features:")
 clf.fit(haarlick_train, trainLabelsHaar)
 y_pred = clf.predict(haarlick_test)
 print("Haarlick Accuracy: {:.2f}%".format(accuracy_score(testLabelsHaar, y_pred) * 100))
+
+#ORB FEATURES
+print("\nevaluating Decision Tree accuracy using ORB features:")
+clf.fit(orb_x_train, orbTrainLabels)
+y_pred = clf.predict(orb_x_test)
+print("ORB Accuracy: {:.2f}%".format(accuracy_score(orbTestLabels, y_pred) * 100))
