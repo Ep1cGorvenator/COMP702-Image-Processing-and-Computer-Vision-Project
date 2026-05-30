@@ -134,6 +134,13 @@ huMoments_otsu_train  = hu.huMomentTrainOtsuThresh(trainImagePaths)
 huMoments_otsu_test   = hu.huMomentTestOtsuThresh(testImagePaths)
 print("[INFO] HU Moment extraction using OTSU thresholding complete")
 
+#USING NO THRESHOLDING
+print("\n[INFO] Extracting HU Moment features using OTSU thresholding...")
+
+huMoments_train = hu.huMomentTrain(trainImagePaths)
+huMoments_test = hu.huMomentTest(testImagePaths)
+print("[INFO] HU Moment extraction using OTSU thresholding complete")
+
 # # ── SIFT Features ──────────────────────────────────────────────────────────
 
 # print("\n[INFO] Extracting SIFT features...")
@@ -200,7 +207,13 @@ print("\nevaluating Hu Moments accuracy (using otsu thresholding):")
 model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
 model.fit(huMoments_otsu_train, trainLabelsHuMoments)
 acc = model.score(huMoments_otsu_test, testLabelsHuMoments)
-print("Hu Moments (adaptive thresholding) accuracy: {:.2f}%".format(acc * 100))
+print("Hu Moments (otsu thresholding) accuracy: {:.2f}%".format(acc * 100))
+
+print("\nevaluating Hu Moments accuracy (using no thresholding):")
+model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
+model.fit(huMoments_train, trainLabelsHuMoments)
+acc = model.score(huMoments_test, testLabelsHuMoments)
+print("Hu Moments (no thresholding) accuracy: {:.2f}%".format(acc * 100))
 
 # #SIFT
 # print("\nevaluating SIFT accuracy:")
@@ -240,6 +253,12 @@ nb_classifier_for_hu_moments.fit(huMoments_otsu_train, trainLabelsHuMoments)
 y_pred = nb_classifier_for_hu_moments.predict(huMoments_otsu_test)
 print("Hu Moments accuracy: {:.2f}%".format(nb_classifier_for_hu_moments.score(huMoments_otsu_test, testLabelsHuMoments) * 100))
 
+print("\nevaluating Hu Moments accuracy using no thresholding:")    
+nb_classifier_for_hu_moments = GaussianNB()
+nb_classifier_for_hu_moments.fit(huMoments_train, trainLabelsHuMoments)
+y_pred = nb_classifier_for_hu_moments.predict(huMoments_test)
+print("Hu Moments accuracy: {:.2f}%".format(nb_classifier_for_hu_moments.score(huMoments_test, testLabelsHuMoments) * 100))
+
 # #SIFT
 # print("\nevaluating SIFT accuracy:")
 # nb_classifier_for_sift = GaussianNB()
@@ -278,6 +297,12 @@ pipe.fit(huMoments_otsu_train, trainLabelsHuMoments)
 pipe.score(huMoments_otsu_test, testLabelsHuMoments)
 print("SVM accuracy using Hu Moments features: {:.2f}%".format(pipe.score(huMoments_otsu_test, testLabelsHuMoments) * 100))
 
+print("\nevaluating SVM accuracy using Hu Moments features (no thresholding):")
+pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
+pipe.fit(huMoments_train, trainLabelsHuMoments)
+pipe.score(huMoments_test, testLabelsHuMoments)
+print("SVM accuracy using Hu Moments features: {:.2f}%".format(pipe.score(huMoments_test, testLabelsHuMoments) * 100))
+
 # #SIFT
 # print("\nevaluating SVM accuracy using sift features:")
 # pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
@@ -309,10 +334,14 @@ clf.fit(huMoments_adaptive_train, trainLabelsHuMoments)
 y_pred = clf.predict(huMoments_adaptive_test)
 print("HU Moments Accuracy: {:.2f}%".format(accuracy_score(testLabelsHuMoments, y_pred) * 100))
 
-#HU MOMENTS FEATURES
 print("\nevaluating Decision Tree accuracy using Hu Moments features (using otsu thresholding):")
 clf.fit(huMoments_otsu_train, trainLabelsHuMoments)
 y_pred = clf.predict(huMoments_otsu_test)
+print("HU Moments Accuracy: {:.2f}%".format(accuracy_score(testLabelsHuMoments, y_pred) * 100))
+
+print("\nevaluating Decision Tree accuracy using Hu Moments features (using no thresholding):")
+clf.fit(huMoments_train, trainLabelsHuMoments)
+y_pred = clf.predict(huMoments_test)
 print("HU Moments Accuracy: {:.2f}%".format(accuracy_score(testLabelsHuMoments, y_pred) * 100))
 
 

@@ -156,3 +156,47 @@ def huMomentTestOtsuThresh(test_img_paths):
             
     # Safely convert to a uniform 2D numpy array: shape (N_images, 7)
     return np.array(test_images_features)
+
+def huMomentTrain(train_img_paths):
+    print(f"Extracting Hu Moment features for {len(train_img_paths)} training images...")
+    training_images_features = []
+    
+    for count, path in enumerate(train_img_paths, 1):
+        image = cv2.imread(path)
+        gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        regions, _, _ = getRegions(gray_img)
+        
+        # This is now guaranteed to be a flat array of exactly 7 numbers
+        imageFeatures = getHuMomentFeatures(regions)
+
+        training_images_features.append(imageFeatures)
+        
+        if count % 500 == 0:
+            print(f"Processed {count}/{len(train_img_paths)}")
+            
+    # Safely convert to a uniform 2D numpy array: shape (N_images, 7 )
+    return np.array(training_images_features)
+
+
+def huMomentTest(test_img_paths):
+    print(f"Extracting Hu moment features for {len(test_img_paths)} testing images...")
+    test_images_features = []
+    
+    for count, path in enumerate(test_img_paths, 1):
+        image = cv2.imread(path)
+        gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        regions, _, _ = getRegions(gray_img)
+
+        # This is now guaranteed to be a flat array of exactly 7 numbers
+        imageFeatures = getHuMomentFeatures(regions)
+
+        test_images_features.append(imageFeatures)
+        
+        # Printing every 10 instead of 500 since your test set only has 50 images
+        if count % 10 == 0:
+            print(f"Processed {count}/{len(test_img_paths)}")
+            
+    # Safely convert to a uniform 2D numpy array: shape (N_images, 7)
+    return np.array(test_images_features)
