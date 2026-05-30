@@ -33,3 +33,13 @@ inside `dataset/`.
 python src/preprocessing.py
 ```
 Note: Requires processed/ images to be present first.
+
+### To Run The Code Yourself
+```bash
+python -m venv venv/ #windows
+or
+python3 -m venv venv/ #mac or linux
+#activate venv
+pip install -r requirements.txt
+python src/knn.py
+```
