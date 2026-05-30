@@ -8,7 +8,7 @@ Raw images are included in this repository under `dataset/raw/`.
 
 ### Processed Images
 Processed and augmented images are available for download here:
-(https://drive.google.com/file/d/1aOc8WKLM5G2Z-5KAWnxh2_Qhj7rIIlSe/view?usp=sharing)
+(https://drive.google.com/file/d/1S3guDCOKgSFzR33mX_eH2cfstR-eu4eG/view?usp=drive_link)
 
 Download and place the `processed/` folder inside `dataset/`.
 
@@ -23,7 +23,7 @@ Note: This will take several minutes to complete.
 ## Preprocessed Images
 
 Preprocessed images are available for download here:
-(https://drive.google.com/file/d/1-K6Kt6W75GToE_r-wme3AZJewVANlugJ/view?usp=sharing)
+(https://drive.google.com/file/d/1z5A2PwFbIKFTnzTivwg98eDwuTY_OwZS/view?usp=drive_link)
 
 Download and place the `preprocessed/` folder 
 inside `dataset/`.

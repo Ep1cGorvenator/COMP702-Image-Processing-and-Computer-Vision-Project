@@ -55,41 +55,41 @@ def save_image(image, output_dir, filename, suffix=None):
 
 # ── Transformation Functions ───────────────────────────────────────────────
 
-def rotate_image(image, angle):
+def remove_scanning_borders(image):
     """
-    Rotates an image by a given angle.
-    Expands the canvas so the full note remains visible.
+    Intelligently detects and removes black scanning borders.
+    If no black border exists, the image remains completely untouched.
     """
-    height, width = image.shape[:2]
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 15, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if not contours:
+        return image
+        
+    largest_contour = max(contours, key=cv2.contourArea)
+    x, y, w, h = cv2.boundingRect(largest_contour)
+    
+    return image[y:y+h, x:x+w]
 
-    # Find the centre point of the image
-    centre = (width // 2, height // 2)
+def rotate_with_white_bg(image, angle):
+    """Rotates image and expands canvas with a white background."""
+    h, w = image.shape[:2]
+    cx, cy = w // 2, h // 2
+    M = cv2.getRotationMatrix2D((cx, cy), angle, 1.0)
 
-    # Get the rotation matrix
-    # This tells OpenCV how to rotate every pixel
-    rotation_matrix = cv2.getRotationMatrix2D(centre, angle, 1.0)
+    cos_a = abs(M[0, 0])
+    sin_a = abs(M[0, 1])
+    new_w = int(h * sin_a + w * cos_a)
+    new_h = int(h * cos_a + w * sin_a)
+    M[0, 2] += (new_w / 2) - cx
+    M[1, 2] += (new_h / 2) - cy
 
-    # Calculate the new canvas size after rotation
-    # so corners don't get cut off
-    cos = abs(rotation_matrix[0, 0])
-    sin = abs(rotation_matrix[0, 1])
-
-    new_width  = int((height * sin) + (width * cos))
-    new_height = int((height * cos) + (width * sin))
-
-    # Adjust the rotation matrix to account for the new canvas size
-    rotation_matrix[0, 2] += (new_width / 2) - centre[0]
-    rotation_matrix[1, 2] += (new_height / 2) - centre[1]
-
-    # Apply the rotation with a white background
-    rotated = cv2.warpAffine(
-        image,
-        rotation_matrix,
-        (new_width, new_height),
-        borderValue=(255, 255, 255)  # white background
+    return cv2.warpAffine(
+        image, M, (new_w, new_h),
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=(255, 255, 255)
     )
-
-    return rotated
 
 def flip_horizontal(image):
     """Mirrors the note left to right."""
@@ -192,11 +192,11 @@ def get_augmentations(image):
     Each entry is (transformed_image, suffix).
     """
     return [
-        (rotate_image(image, 45),            "rot45"),
-        (rotate_image(image, 90),            "rot90"),
-        (rotate_image(image, 135),           "rot135"),
-        (rotate_image(image, 180),           "rot180"),
-        (rotate_image(image, 270),           "rot270"),
+        (rotate_with_white_bg(image, 45),            "rot45"),
+        (rotate_with_white_bg(image, 90),            "rot90"),
+        (rotate_with_white_bg(image, 135),           "rot135"),
+        (rotate_with_white_bg(image, 180),           "rot180"),
+        (rotate_with_white_bg(image, 270),           "rot270"),
         (flip_horizontal(image),             "fliph"),
         (flip_vertical(image),               "flipv"),
         (scale_image(image, 0.75),           "scale75"),
@@ -281,7 +281,8 @@ def run_augmentation_pipeline():
                     if image is None:
                         print(f"   ERROR reading: {filename}")
                         continue
-
+                    
+                    image = remove_scanning_borders(image)
                     # Copy original to train
                     save_image(image, train_out, filename)
                     total_train_original += 1
@@ -300,7 +301,8 @@ def run_augmentation_pipeline():
                     if image is None:
                         print(f"   ERROR reading: {filename}")
                         continue
-
+                    
+                    image = remove_scanning_borders(image)
                     # Copy original to test/clean
                     save_image(image, clean_out, filename)
                     total_test_clean += 1
