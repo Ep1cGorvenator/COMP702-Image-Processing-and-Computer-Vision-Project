@@ -199,11 +199,11 @@ def haarlickTrain(train_img_paths):
     
     for count, path in enumerate(train_img_paths, 1):
         image = cv2.imread(path)
-        gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        thresh_gauss = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        thresh_gauss = cv2.adaptiveThreshold(
-            gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
-        thresh_gauss = cv2.bitwise_not(thresh_gauss)
+ #       thresh_gauss = cv2.adaptiveThreshold(
+ #           gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
+ #       thresh_gauss = cv2.bitwise_not(thresh_gauss)
         
         regions, _, _ = getRegions(thresh_gauss)
         
@@ -269,11 +269,11 @@ def haarlickTest(test_img_paths):
     
     for count, path in enumerate(test_img_paths, 1):
         image = cv2.imread(path)
-        gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        thresh_gauss = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        thresh_gauss = cv2.adaptiveThreshold(
-            gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
-        thresh_gauss = cv2.bitwise_not(thresh_gauss)
+#        thresh_gauss = cv2.adaptiveThreshold(
+#            gray_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 199, 5)
+#        thresh_gauss = cv2.bitwise_not(thresh_gauss)
 
         regions, _, _ = getRegions(thresh_gauss)
 

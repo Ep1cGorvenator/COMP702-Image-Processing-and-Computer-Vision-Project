@@ -312,7 +312,7 @@ print("\n-------------------KNN CLASSIFICATION-------------------")
 # model.fit(trainFeat, trainLabels)
 # acc = model.score(testFeat, testLabels)
 # print("histogram accuracy: {:.2f}%".format(acc * 100))
-
+"""
 #HU MOMENTS FEATURES
 print("\nevaluating Hu Moments accuracy:")
 model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
@@ -326,7 +326,7 @@ model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
 model.fit(sift_x_train, siftTrainLabels)
 acc = model.score(sift_x_test, siftTestLabels)
 print("SIFT accuracy: {:.2f}%".format(acc * 100))
-
+"""
 #HAARLICK FEATURES
 print("\nevaluating Haarlick features accuracy:")
 model = KNeighborsClassifier(n_neighbors=1,n_jobs=4)
@@ -349,7 +349,7 @@ print("\n\n-------------------NAIVE BAYES CLASSIFICATION-------------------\n")
 # nb_classifier_for_histograms.fit(trainFeat, trainLabels)
 # y_pred = nb_classifier_for_histograms.predict(testFeat)
 # print("histogram accuracy: {:.2f}%".format(nb_classifier_for_histograms.score(testFeat, testLabels) * 100))
-
+"""
 #HU MOMENTS FEATURES
 print("\nevaluating Hu Moments accuracy:")	
 nb_classifier_for_hu_moments = GaussianNB()
@@ -363,7 +363,7 @@ nb_classifier_for_sift = GaussianNB()
 nb_classifier_for_sift.fit(sift_x_train, siftTrainLabels)
 y_pred = nb_classifier_for_sift.predict(sift_x_test)
 print("SIFT accuracy: {:.2f}%".format(nb_classifier_for_sift.score(sift_x_test, siftTestLabels) * 100))
-
+"""
 #HAARLICK FEATURES
 print("\nevaluating Haarlick features accuracy:")
 nb_classifier_for_haarlick = GaussianNB()
@@ -386,7 +386,7 @@ print("\n\n-------------------SVM CLASSIFICATION-------------------\n")
 # pipe.fit(trainFeat, trainLabels)
 # pipe.score(testFeat, testLabels)
 # print("SVM accuracy using histogram features: {:.2f}%".format(pipe.score(testFeat, testLabels) * 100))
-
+"""
 #HU MOMENTS FEATURES
 print("\nevaluating SVM accuracy using Hu Moments features:")
 pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
@@ -400,7 +400,7 @@ pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 1
 pipe.fit(sift_x_train, siftTrainLabels)
 pipe.score(sift_x_test, siftTestLabels)
 print("SVM accuracy using sift features: {:.2f}%".format(pipe.score(sift_x_test,siftTestLabels) * 100))
-
+"""
 #HAARLICK FEATURES
 print("\nevaluating SVM accuracy using Haarlick features:")
 pipe = Pipeline([('scaler', StandardScaler()), ('svc', SVC(kernel = 'rbf', C = 10))])
@@ -422,7 +422,7 @@ print("\n\n-------------------DECISION TREE CLASSIFICATION-------------------")
 # clf.fit(trainFeat, trainLabels)
 # y_pred = clf.predict(testFeat)
 # print("Histogram features Accuracy: {:.2f}%".format(accuracy_score(testLabels, y_pred) * 100))
-
+"""
 #HU MOMENTS FEATURES
 print("\nevaluating Decision Tree accuracy using Hu Moments features:")
 clf.fit(trainHM, trainLabelsHM)
@@ -434,7 +434,7 @@ print("\nevaluating Decision Tree accuracy using sift features:")
 clf.fit(sift_x_train, siftTrainLabels)
 y_pred = clf.predict(sift_x_test)
 print("SIFT Accuracy: {:.2f}%".format(accuracy_score(siftTestLabels, y_pred) * 100))
-
+"""
 #HARALICK
 print("\nevaluating Decision Tree accuracy using Haralick features:")
 clf.fit(haarlick_train, trainLabelsHaar)
